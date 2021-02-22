@@ -101,3 +101,16 @@
       roles:
         - db: "{{ db_name_todo }}"
           role: readWrite
+    # DB connection allowed from inside host for APP connectivity
+  - name: db accepts connection from anywhere
+    lineinfile:
+      path: /etc/mongod.conf
+      line: "  bindIp: 0.0.0.0"
+      regexp: '^(.*)bindIp(.*)$'
+      state: present
+    notify: mongodb is restarted
+  handlers:
+  - name: mongodb is restarted
+    service:
+      name: mongod
+      state: restarted
