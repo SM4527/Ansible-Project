@@ -1,8 +1,11 @@
 - name: play Database
   hosts: db
   become: yes
+  tags:
+  - db-install
   tasks:
 
+#1) Install Mongodb and Start service
 #Ubuntu 18.04 (Bionic)
 #https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 
@@ -36,3 +39,36 @@
         name: mongod
         state: started
         enabled: yes
+
+- name: play database  - configure admin
+  hosts: db
+  become: yes
+  tags:
+  - db-config-admin
+  tasks:
+    #2) drop admin user if exist
+    # mongo admin --eval 'db.dropUser("superadmin")'
+    #3) create admin user
+    # mongo admin --eval 'db.createUser( { user: "superadmin", pwd: "MyPass1234", roles: [ { role: "clusterAdmin", db: "admin" }, { role: "userAdminAnyDatabase", db: "admin" } ] } )'
+  - name: admin user
+    command: "{{ item }}"
+    loop:
+    - mongo admin --eval 'db.dropUser("{{ db_admin_user }}")'
+    - |
+      mongo admin --eval 'db.createUser( { user: "{{ db_admin_user }}", pwd: "{{ db_admin_pass }}", roles: [ { role: "clusterAdmin", db: "admin" }, { role: "userAdminAnyDatabase", db: "admin" } ] } )'
+    #4) enable security (/etc/mongod.conf) --> Restart Mongodb
+    #> security:
+    #>   authorization: "enabled"
+  - name: security is enabled
+    blockinfile:
+      path: /etc/mongod.conf
+      block: |
+        security:
+          authorization: "enabled"
+      state: present
+    notify: mongodb is restarted
+  handlers:
+  - name: mongodb is restarted
+    service:
+      name: mongod
+      state: restarted
