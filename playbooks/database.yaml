@@ -72,3 +72,32 @@
     service:
       name: mongod
       state: restarted
+
+- name: play for rest of configuration
+  hosts: db
+  become: yes
+  tags:
+  - db-config
+  tasks:
+  # install Pip
+  - name: pip3 installed
+    package:
+      name: python3-pip
+      state: latest
+  # install pymango
+  - name: pip pymongo installed
+    pip:
+      name: pymongo
+      state: latest
+    # Create Application user
+  - name: todo db user exsits
+    mongodb_user:
+      login_user: "{{ db_admin_user }}"
+      login_password: "{{ db_admin_pass }}"
+      database: admin
+      user: "{{ db_todo_user }}"
+      password: "{{ db_todo_pass }}"
+      state: present
+      roles:
+        - db: "{{ db_name_todo }}"
+          role: readWrite
