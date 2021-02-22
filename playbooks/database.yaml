@@ -1,3 +1,38 @@
 - name: play Database
   hosts: db
-  tasks: []
+  become: yes
+  tasks:
+
+#Ubuntu 18.04 (Bionic)
+#https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+
+#sudo apt-get install gnupg
+    - name: gnupg install
+      package:
+        name: gnupg
+        state: present
+
+#wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+    - name: mongodb key is added
+      apt_key:
+        url: https://www.mongodb.org/static/pgp/server-4.4.asc
+
+#echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+    - name: mongodb repository is enabled
+      apt_repository:
+        repo: deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse
+        state: present
+        filename: mongodb-org-4.4
+
+#sudo apt-get install -y mongodb-org
+    - name: mongodb is installed
+      package:
+        name: mongodb-org
+        state: present
+
+#sudo systemctl start mongod
+    - name: mongodb is started
+      service:
+        name: mongod
+        state: started
+        enabled: yes
